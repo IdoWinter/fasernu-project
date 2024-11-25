@@ -71,6 +71,7 @@ void GenieAna::process()
 {
     for (double R = m_min_radius; R <= m_max_radius; R += m_radius_step) {
         TH1D* h_num_jets = new TH1D(Form("h_num_jets_R_%.2f", R), Form("Number of Jets per Event (R=%.2f);Number of Jets;Events", R), 100, 0, 50);
+        std::cout << "Processing radius " << R << std::endl;
         int nEvents = m_tree->GetEntries();
         for (int i = 0; i < nEvents; i++) {
             m_tree->GetEntry(i);
@@ -151,6 +152,7 @@ void GenieAna::process()
         // Calculate average number of jets and standard deviation
         double mean = h_num_jets->GetMean();
         double std_dev = h_num_jets->GetStdDev();
+        delete h_num_jets;
 
         h_avg_num_jets->Fill(R, mean);
         h_std_dev_num_jets->Fill(R, std_dev);
