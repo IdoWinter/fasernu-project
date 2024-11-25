@@ -38,8 +38,9 @@ execute_process(COMMAND fastjet-config --libs
 # same C++ standard as ROOT was compiled with.
    file(GLOB SOURCES "src/*.cxx")
    add_library(GenieEvent SHARED ${SOURCES})
-   target_link_libraries(GenieEvent PUBLIC ROOT::Core ROOT::RIO ROOT::Net ROOT::Hist ROOT::Tree ROOT::Graf ROOT::Graf3d ROOT::Gpad)
+   target_link_libraries(GenieEvent PUBLIC ROOT::Core ROOT::RIO ROOT::Net ROOT::Hist ROOT::Tree ROOT::Graf ROOT::Graf3d ROOT::Gpad ROOT::Physics)   
 
+   set(CMAKE_BUILD_TYPE Debug)
 # Create the main program using the library.
    add_executable(AnaExample_Event app/AnaExample_Event.cxx)
    target_link_libraries(AnaExample_Event GenieEvent ${FASTJET_LIBS})
