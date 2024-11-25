@@ -29,27 +29,27 @@ void GenieAna::init()
 {
     f_results = TFile::Open("results.root", "RECREATE");
 
-    // h_process = new TH1D("Process", "Process", 2, 0, 2); // 0-1 charged, 1-2 neutral current
+    h_process = new TH1D("Process", "Process", 2, 0, 2); // 0-1 charged, 1-2 neutral current
 	// m_histos.push_back(h_process);
 
-	// h_nJets = new TH1D("NJets", "NJets", 15, 0, 15); 
+	h_nJets = new TH1D("NJets", "NJets", 15, 0, 15); 
     // m_histos.push_back(h_nJets);
 
-	// h_incomingE = new TH1D("Incoming E", "Incoming E; [GeV]; N/50 GeV", 100, 0, 5000);
+	h_incomingE = new TH1D("Incoming E", "Incoming E; [GeV]; N/50 GeV", 100, 0, 5000);
     // m_histos.push_back(h_incomingE);
-    // h_nOutgoing = new TH1D("Outgoing N", "Outgoing N; Particles; N", 200, 0, 200);
+    h_nOutgoing = new TH1D("Outgoing N", "Outgoing N; Particles; N", 200, 0, 200);
     // m_histos.push_back(h_nOutgoing);
-    // h_nOutgoingBaryons = new TH1D("Outgoing N B", "Outgoing N B; Baryons; N", 200, 0, 200);
+    h_nOutgoingBaryons = new TH1D("Outgoing N B", "Outgoing N B; Baryons; N", 200, 0, 200);
     // m_histos.push_back(h_nOutgoingBaryons);
-    // h_nOutgoingMesons = new TH1D("Outgoing N M", "Outgoing N M; Mesons; N", 200, 0, 1);
+    h_nOutgoingMesons = new TH1D("Outgoing N M", "Outgoing N M; Mesons; N", 200, 0, 1);
     // m_histos.push_back(h_nOutgoingMesons);
-    // h_outgoing_leptonE = new TH1D("Outgoing Lepton E", "Outgoing Lepton E; [GeV]; N/50 GeV", 100, 0, 5000);
+    h_outgoing_leptonE = new TH1D("Outgoing Lepton E", "Outgoing Lepton E; [GeV]; N/50 GeV", 100, 0, 5000);
     // m_histos.push_back(h_outgoing_leptonE);
-    // h_outgoing_leptonEfrac = new TH1D("Outgoing Lepton Efrac", "Outgoing Lepton Efrac", 102, -0.1, 1.1);
+    h_outgoing_leptonEfrac = new TH1D("Outgoing Lepton Efrac", "Outgoing Lepton Efrac", 102, -0.1, 1.1);
     // m_histos.push_back(h_outgoing_leptonEfrac);
-	// h_outgoing_mesonEfrac = new TH1D("Outgoing Meson Efrac", "Outgoing Meson Efrac", 102, -0.1, 1.1);
+	h_outgoing_mesonEfrac = new TH1D("Outgoing Meson Efrac", "Outgoing Meson Efrac", 102, -0.1, 1.1);
 	// m_histos.push_back(h_outgoing_mesonEfrac);
-    // h_outgoing_baryonEfrac = new TH1D("Outgoing Baryon Efrac", "Outgoing Baryon Efrac", 102, -0.1, 1.1);
+    h_outgoing_baryonEfrac = new TH1D("Outgoing Baryon Efrac", "Outgoing Baryon Efrac", 102, -0.1, 1.1);
     // m_histos.push_back(h_outgoing_baryonEfrac);
 
     h_missing_particles_in_jet = new TH1D("Missing Particles in Jet", "Missing Particles in Jet; Missing Particles; N", 200, 0, 200);
