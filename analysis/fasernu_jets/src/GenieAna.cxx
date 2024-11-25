@@ -7,7 +7,6 @@
 #include "TLorentzVector.h"
 #include <iostream>
 #include <vector>
-#include <numeric>
 
 GenieAna::GenieAna()
 {
@@ -71,11 +70,9 @@ void GenieAna::init()
 void GenieAna::process()
 {
     for (double R = m_min_radius; R <= m_max_radius; R += m_radius_step) {
-        std::vector<int> num_jets_per_event;
+        TH1D* h_num_jets = new TH1D(Form("h_num_jets_R_%.2f", R), Form("Number of Jets per Event (R=%.2f);Number of Jets;Events", R), 100, 0, 50);
         int nEvents = m_tree->GetEntries();
         for (int i = 0; i < nEvents; i++) {
-
-
             m_tree->GetEntry(i);
             auto incomingE = m_genieEvent->E->at(0);
             auto px_incoming = m_genieEvent->px->at(0);
@@ -148,15 +145,13 @@ void GenieAna::process()
             std::vector<fastjet::PseudoJet> jets = cs.inclusive_jets();
 
             // Store the number of jets for this event
-            num_jets_per_event.push_back(jets.size());
+            h_num_jets->Fill(jets.size());
         }
 
         // Calculate average number of jets and standard deviation
-        double sum = std::accumulate(num_jets_per_event.begin(), num_jets_per_event.end(), 0.0);
-        double mean = sum / num_jets_per_event.size();
+        double mean = h_num_jets->GetMean();
+        double std_dev = h_num_jets->GetStdDev();
 
-        double sq_sum = std::inner_product(num_jets_per_event.begin(), num_jets_per_event.end(), num_jets_per_event.begin(), 0.0);
-        double std_dev = std::sqrt(sq_sum / num_jets_per_event.size() - mean * mean);
         h_avg_num_jets->Fill(R, mean);
         h_std_dev_num_jets->Fill(R, std_dev);
     }
