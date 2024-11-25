@@ -1,6 +1,6 @@
 #include "FaserNu_Jets/GenieAna.h"
 #include "FaserNu_Jets/GenieEvent.h"
-#include "fastjet/ClusterSequence.hh"
+#include "FaserNu_Jets/CustomJetAlgorithm.h"
 #include "TH1D.h"
 #include "TCanvas.h"
 #include "TFile.h"
@@ -52,13 +52,11 @@ void GenieAna::init()
     h_outgoing_baryonEfrac = new TH1D("Outgoing Baryon Efrac", "Outgoing Baryon Efrac", 102, -0.1, 1.1);
     m_histos.push_back(h_outgoing_baryonEfrac);
 
-    h_avg_num_jets = new TH1D("h_avg_num_jets", "Average Number of Jets vs Radius;Radius;Average Number of Jets", (m_max_radius - m_min_radius) / m_radius_step, m_min_radius, m_max_radius);
-    m_histos.push_back(h_avg_num_jets);
+    h_missing_particles_in_jet = new TH1D("Missing Particles in Jet", "Missing Particles in Jet; Missing Particles; N", 200, 0, 200);
+    m_histos.push_back(h_missing_particles_in_jet);
 
-    h_std_dev_num_jets = new TH1D("h_std_dev_num_jets", "Standard Deviation of Number of Jets vs Radius;Radius;Standard Deviation", (m_max_radius - m_min_radius) / m_radius_step, m_min_radius, m_max_radius);
-    m_histos.push_back(h_std_dev_num_jets);
-
-
+    h_missing_energy_in_jet = new TH1D("Missing Energy in Jet", "Missing Energy in Jet; Missing Energy; N", 200, -100, 100);
+    m_histos.push_back(h_missing_energy_in_jet);
 
 
     TFile* f_in =  TFile::Open(m_inputFile.c_str());
@@ -98,7 +96,8 @@ void GenieAna::process()
             double py_transfered = py_incoming;
             double pz_transfered = pz_incoming;
             double E_transfered = incomingE;
-            std::vector<fastjet::PseudoJet> jet_inputs;
+            CustomJetAlgorithm jet_algorithm;
+            jet_algorithm.set_expected_radius(R);
 
             for (int i_part = 0; i_part < m_genieEvent->pdgc->size(); i_part++) {
                 auto pdgc = m_genieEvent->pdgc->at(i_part);
@@ -112,6 +111,9 @@ void GenieAna::process()
                 {
                     continue; // this is not a final state particle
                 }
+
+                jet_algorithm.add_particle(new Particle{new TLorentzVector(px, py, pz, E), pdgc});
+                
                 if (abs(pdgc) < 20)
                 {
                     h_outgoing_leptonE->Fill(E);
@@ -129,8 +131,6 @@ void GenieAna::process()
                 {
                     nMesons++;
                     E_mesons += E;
-                    auto meson_input = fastjet::PseudoJet(px, py, pz, E);
-                    jet_inputs.push_back(meson_input);
 
                 }
                 if (abs(pdgc) > 1000 && abs(pdgc) < 1e6)
@@ -141,21 +141,20 @@ void GenieAna::process()
             }
 
             // Perform jet clustering with current radius R
-            fastjet::JetDefinition jet_def(fastjet::antikt_algorithm, R);
-            fastjet::ClusterSequence cs(jet_inputs, jet_def);
-            std::vector<fastjet::PseudoJet> jets = cs.inclusive_jets();
+            jet_algorithm.process();
 
             // Store the number of jets for this event
-            h_num_jets->Fill(jets.size());
+            auto jet_vector = jet_algorithm.get_jet_vector();
+
+            h_missing_particles_in_jet->Fill(jet_algorithm.get_missing_particles().size());
+            h_missing_energy_in_jet->Fill(jet_vector.E() - E_transfered);
+            h_missing_momentum_in_jet->Fill(jet_vector.P() - sqrt(px_transfered * px_transfered + py_transfered * py_transfered + pz_transfered * pz_transfered));
+
+
         }
 
-        // Calculate average number of jets and standard deviation
-        double mean = h_num_jets->GetMean();
-        double std_dev = h_num_jets->GetStdDev();
-        delete h_num_jets;
 
-        h_avg_num_jets->Fill(R, mean);
-        h_std_dev_num_jets->Fill(R, std_dev);
+        
     }
 
 }
