@@ -53,10 +53,10 @@ void GenieAna::init()
     h_outgoing_baryonEfrac = new TH1D("Outgoing Baryon Efrac", "Outgoing Baryon Efrac", 102, -0.1, 1.1);
     m_histos.push_back(h_outgoing_baryonEfrac);
 
-    h_avg_num_jets = new TH1D("h_avg_num_jets", "Average Number of Jets vs Radius;Radius;Average Number of Jets", (max_radius - min_radius) / radius_step, min_radius, max_radius);
+    h_avg_num_jets = new TH1D("h_avg_num_jets", "Average Number of Jets vs Radius;Radius;Average Number of Jets", (m_max_radius - m_min_radius) / m_radius_step, m_min_radius, m_max_radius);
     m_histos.push_back(h_avg_num_jets);
 
-    h_std_dev_num_jets = new TH1D("h_std_dev_num_jets", "Standard Deviation of Number of Jets vs Radius;Radius;Standard Deviation", (max_radius - min_radius) / radius_step, min_radius, max_radius);
+    h_std_dev_num_jets = new TH1D("h_std_dev_num_jets", "Standard Deviation of Number of Jets vs Radius;Radius;Standard Deviation", (m_max_radius - m_min_radius) / m_radius_step, m_min_radius, m_max_radius);
     m_histos.push_back(h_std_dev_num_jets);
 
 
@@ -71,11 +71,10 @@ void GenieAna::init()
 void GenieAna::process()
 {
     for (double R = m_min_radius; R <= m_max_radius; R += m_radius_step) {
-
+        std::vector<int> num_jets_per_event;
         int nEvents = m_tree->GetEntries();
         for (int i = 0; i < nEvents; i++) {
 
-            std::vector<int> num_jets_per_event;
 
             m_tree->GetEntry(i);
             auto incomingE = m_genieEvent->E->at(0);
