@@ -58,6 +58,9 @@ void GenieAna::init()
     h_missing_energy_in_jet = new TH1D("Missing Energy in Jet", "Missing Energy in Jet; Missing Energy; N", 200, -100, 100);
     m_histos.push_back(h_missing_energy_in_jet);
 
+    h_missing_momentum_in_jet = new TH1D("Missing Momentum in Jet", "Missing Momentum in Jet; Missing Momentum; N", 200, -100, 100);
+    m_histos.push_back(h_missing_momentum_in_jet);
+
 
     TFile* f_in =  TFile::Open(m_inputFile.c_str());
     f_in->GetObject("gFaser",m_tree);
