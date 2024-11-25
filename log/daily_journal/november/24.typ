@@ -11,7 +11,7 @@ using a jet algorithm called anti-kT, we find a large number of jets from the ne
 We also expect all of the hadrons to be included in the jets, so if we miss some of them, it's a sign that the radius might be too small.
 
 Next Steps:
-- Run the analysis with a varying radius parameter to see how the number of jets and the number of included hadrons (and more...) change.
+- Run the analysis with a varying radius parameter to see how the number of jets and the number of included hadrons change.
 - Create a plot similar to the one in this #link("https://gsalam.web.cern.ch/gsalam/repository/talks/2015-SaoPaulo-lecture4.pdf")[
   #set text(fill: red)
   link
