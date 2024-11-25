@@ -25,8 +25,8 @@ protected:
    std::string m_outputFile;
 
    std::vector<TH1D*> m_histos;
-   double m_min_radius = 0.4;
-   double m_max_radius = 0.4;
+   double m_min_radius = 2;
+   double m_max_radius = 2;
    double m_radius_step = 0.05;
 
    TH1D* h_process;
