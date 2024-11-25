@@ -1,8 +1,4 @@
-#include <vector>
-#include <iostream>
-#include "CustomJetAlgorithm.h"
-#include <utility>
-
+#include "Helpers.h"
 
 std::pair<int, int> count_mesons_and_baryons(std::vector<Particle*> particles) {
     int nMesons = 0;

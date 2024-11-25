@@ -1,5 +1,5 @@
 #include "FaserNu_Jets/CustomJetAlgorithm.h"
-#include "Helpers.cxx"
+#include "Helpers.h"
 
 CustomJetAlgorithm::CustomJetAlgorithm()
 {
