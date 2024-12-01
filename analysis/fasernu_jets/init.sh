@@ -6,3 +6,4 @@ export VDT_INCLUDE_DIR=/cvmfs/sft.cern.ch/lcg/releases/vdt/0.4.4-48c41/x86_64-el
 export FASTJET_DIR=/cvmfs/sft.cern.ch/lcg/releases/fastjet/3.4.1-5af57/x86_64-el9-gcc13-opt
 export VDT_LIBRARY=/cvmfs/sft.cern.ch/lcg/releases/vdt/0.4.4-48c41/x86_64-el9-gcc13-opt/lib
 export PATH=$FASTJET_DIR/bin:$PATH
+unset PYTHONHOME

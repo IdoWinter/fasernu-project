@@ -15,6 +15,20 @@
 struct Particle {
     TLorentzVector *momentum;
     int pdgc;
+    std::string name;
+
+    Particle(TLorentzVector *momentum, int pdgc, std::string name) : momentum(momentum), name(name), pdgc(pdgc) 
+    {}
+
+    friend std::ostream& operator<<(std::ostream& os, const Particle& p) {
+       os << "Particle(name: " << p.name
+        << ", px: " << p.momentum->Px()
+        << ", py: " << p.momentum->Py()
+        << ", pz: " << p.momentum->Pz()
+        << ", energy: " << p.momentum->E()
+       << ")";
+        return os;
+    }
 };
 
 class CustomJetAlgorithm
@@ -23,14 +37,16 @@ class CustomJetAlgorithm
 public: 
    CustomJetAlgorithm();
    ~CustomJetAlgorithm();
-   void add_particle(Particle* particle);
+   void addParticle(Particle* particle);
    
-   void process();
-   void set_expected_radius(double radius);
+   double findActualRadius();
+   void setExpectedRadius(double radius);
 
-   TLorentzVector get_jet_vector();
+   TLorentzVector getJetVector();
 
-   std::vector<Particle*> get_missing_particles();
+   std::vector<Particle*> getMissingParticles();
+
+   bool isValid();
 
    protected:
    void add_lepton(Particle *lepton);
@@ -44,6 +60,7 @@ public:
     double m_expected_radius = 0.4;
 
     std::vector<Particle*> m_output_jet_particles;
+    bool m_isValid;
 };
 
 #endif
