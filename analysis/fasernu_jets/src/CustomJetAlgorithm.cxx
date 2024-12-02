@@ -119,17 +119,38 @@ double CustomJetAlgorithm::findActualRadius()
     //           << "Jet phi: " << expected_jet_phi << std::endl;
 
     double max_distance = 0;
+    double total_energy = 0;
+
+    std::vector<std::pair<double, Particle*>> particle_distances;
+
     for (auto particle : m_candidate_jet_particles)
     {
+        total_energy += particle->momentum->E();
         double delta_rapidity = particle->momentum->PseudoRapidity() - expected_jet_rapidity;
         double delta_phi = particle->momentum->Phi() - expected_jet_phi;
         double delta_r = sqrt(delta_rapidity * delta_rapidity + delta_phi * delta_phi);
-        if (delta_r > max_distance)
+        particle_distances.push_back(std::make_pair(delta_r, particle));
+    }
+
+    // sort from closest to farthest
+    std::sort(particle_distances.begin(), particle_distances.end(), [](std::pair<double, Particle*> a, std::pair<double, Particle*> b) {
+        return a.first < b.first;
+    });
+
+    double current_energy = 0;
+    for (auto particle_distance : particle_distances)
+    {
+        current_energy += particle_distance.second->momentum->E();
+        double current_distance = particle_distance.first;
+        if (current_energy > total_energy * 0.90)
         {
-            max_distance = delta_r;
+            return current_distance;
         }
     }
-    return max_distance;
+
+    // should not be possible since the eneregy should reach 80% before the last particle
+    this->m_isValid = false;
+    return -1;
 }
 
 void CustomJetAlgorithm::setExpectedRadius(double radius)
