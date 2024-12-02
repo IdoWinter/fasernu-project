@@ -40,11 +40,12 @@ public:
    void addParticle(Particle* particle);
    
    double findActualRadius();
-   void setExpectedRadius(double radius);
 
    TLorentzVector getJetVector();
 
    std::vector<Particle*> getMissingParticles();
+   double getAverageBaryonDistance();
+   double getAverageMesonDistance();
 
    bool isValid();
 
@@ -57,7 +58,11 @@ public:
     Particle* m_neutrino;
     std::vector<Particle*> m_candidate_jet_particles;
 
-    double m_expected_radius = 0.4;
+    double m_baryon_total_distance = 0;
+    double m_baryon_total_count = 0;
+    
+    double m_meson_total_distance = 0;
+    double m_meson_total_count = 0;
 
     std::vector<Particle*> m_output_jet_particles;
     bool m_isValid;

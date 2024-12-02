@@ -6,6 +6,14 @@
 
 #pagebreak()
 #set text(size: 16pt)
+#set figure(numbering: "1")
+// #show figure: (data) => {
+//   box([
+//   #data
+//   #if (data.caption == none) {
+//     [Figure #data.counter.get().at(0)]
+//   }])
+// }
 #outline(depth: 1)
 
 #pagebreak()
@@ -13,7 +21,9 @@
 #include "./november/24.typ"
 #include "./november/25.typ"
 #include "./november/28.typ"
-#include "./december/01.typ"
 
 #pagebreak()
 = December
+
+#include "./december/01.typ"
+#include "./december/02.typ"

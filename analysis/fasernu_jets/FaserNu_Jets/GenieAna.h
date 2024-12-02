@@ -4,6 +4,8 @@
 #include "FaserNu_Jets/GenieEvent.h"
 #include "TTree.h"
 #include "TH1D.h"
+#include "TLorentzVector.h"
+#include "FaserNu_Jets/CustomJetAlgorithm.h"
 
 #include <string>
 class GenieAna
@@ -14,12 +16,15 @@ public:
    ~GenieAna();
    void init();
    void process();
-   void close(); 
+   void close();
 
    void setInput(std::string input);
    void setOutput(std::string output);
 protected:
-
+   void createRegimeHistograms();
+   void createRegimeHistogram(std::string name, std::shared_ptr<TH1D> (*createHistogramFunction)()); 
+   void fillHistograms(double radius, int nBaryons, int nMesons, double E_baryons, double E_mesons, CustomJetAlgorithm* jetAlgorithm);
+   
    GenieEvent* m_genieEvent; 
    std::string m_inputFile;
    std::string m_outputFile;
@@ -42,6 +47,8 @@ protected:
    TH1D* h_radius_of_jet_in_event;
    TH1D* h_missing_energy_in_jet;
    TH1D* h_missing_momentum_in_jet;
+
+   std::map<std::string, std::vector<std::shared_ptr<TH1D>>> h_regime_histograms; 
 
    TTree* m_tree;
    TFile* f_results;

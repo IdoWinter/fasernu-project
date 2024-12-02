@@ -1,6 +1,7 @@
 #include "FaserNu_Jets/CustomJetAlgorithm.h"
 #include "Helpers.h"
 #include "CustomJetAlgorithm.h"
+#include <memory>
 
 CustomJetAlgorithm::CustomJetAlgorithm() 
 : m_lepton(nullptr), m_neutrino(nullptr), m_candidate_jet_particles(), m_output_jet_particles(),
@@ -129,6 +130,17 @@ double CustomJetAlgorithm::findActualRadius()
         double delta_rapidity = particle->momentum->PseudoRapidity() - expected_jet_rapidity;
         double delta_phi = particle->momentum->Phi() - expected_jet_phi;
         double delta_r = sqrt(delta_rapidity * delta_rapidity + delta_phi * delta_phi);
+        if (abs(particle->pdgc) < 1e3)
+        {
+            // meson
+            this->m_baryon_total_distance += delta_r;
+            this->m_baryon_total_count++;
+        } else if (abs(particle->pdgc) < 1e6)
+        {
+            // baryon
+            this->m_meson_total_distance += delta_r;
+            this->m_meson_total_count++;
+        }
         particle_distances.push_back(std::make_pair(delta_r, particle));
     }
 
@@ -140,6 +152,7 @@ double CustomJetAlgorithm::findActualRadius()
     double current_energy = 0;
     for (auto particle_distance : particle_distances)
     {
+        m_output_jet_particles.push_back(particle_distance.second);
         current_energy += particle_distance.second->momentum->E();
         double current_distance = particle_distance.first;
         if (current_energy > total_energy * 0.90)
@@ -148,15 +161,11 @@ double CustomJetAlgorithm::findActualRadius()
         }
     }
 
-    // should not be possible since the eneregy should reach 80% before the last particle
+    // should not be possible since the energy should reach 90% before the last particle
     this->m_isValid = false;
     return -1;
 }
 
-void CustomJetAlgorithm::setExpectedRadius(double radius)
-{
-    m_expected_radius = radius;
-}
 
 TLorentzVector CustomJetAlgorithm::getJetVector()
 {
@@ -179,6 +188,16 @@ std::vector<Particle*> CustomJetAlgorithm::getMissingParticles()
         }
     }
     return missing_particles;
+}
+
+double CustomJetAlgorithm::getAverageBaryonDistance()
+{
+    return this->m_baryon_total_distance / this->m_baryon_total_count;
+}
+
+double CustomJetAlgorithm::getAverageMesonDistance()
+{
+    return this->m_meson_total_distance / this->m_meson_total_count;
 }
 
 bool CustomJetAlgorithm::isValid()
