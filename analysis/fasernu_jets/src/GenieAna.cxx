@@ -55,7 +55,15 @@ void GenieAna::init()
     // m_histos.push_back(h_outgoing_baryonEfrac);
 
     h_radius_of_jet_in_event = new TH1D("Radius of jet", "Radius of jet; radius; number of events", int((m_max_radius - m_min_radius) / m_radius_step), m_min_radius, m_max_radius);
-    m_histos.push_back(h_radius_of_jet_in_event);
+    // m_histos.push_back(h_radius_of_jet_in_event);
+
+    h_delta_pt = new TH1D("Delta Pt", "Delta Pt; Delta Pt [GeV]; N", 500, 0, 0.5);
+    // m_histos.push_back(h_delta_pt);
+    h_delta_alpha_t = new TH1D("#delta#alpha_{t}", "#delta#alpha_{t}; #delta#alpha_{t}; N", 100, 0, 180);
+    // m_histos.push_back(h_delta_alpha_t);
+    
+    h_delta_phi_t = new TH1D("#delta#phi_{t}", "#delta#phi_{t}; #delta#phi_{t}; N", 100, 0, 60);
+    m_histos.push_back(h_delta_phi_t);
 
     createRegimeHistograms();
 
@@ -212,6 +220,10 @@ void GenieAna::process()
             continue;
         }
 
+        h_delta_pt->Fill(jet_algorithm->getDeltaPt().Mod());
+        h_delta_alpha_t->Fill(jet_algorithm->getDeltaAlphaT());
+        h_delta_phi_t->Fill(jet_algorithm->getDeltaPhi());
+
         h_radius_of_jet_in_event->Fill(radius);
 
         fillHistograms(radius, nBaryons, nMesons, E_baryons, E_mesons, jet_algorithm);
@@ -265,14 +277,6 @@ void GenieAna::close()
     {
         h->Draw();
         
-    }
-
-    for (auto regime : h_regime_histograms)
-    {
-        for (auto hist : regime.second)
-        {
-            hist->Draw();
-        }
     }
     
     canvas->SaveAs("output.svg");

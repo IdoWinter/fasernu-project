@@ -1,7 +1,7 @@
 #import "../../templates/journal.typ": *
 #import "../../shorthands.typ": *
 
-#show: doc => journal_entry(date: datetime(day: 1, month: 12, year: 2024), doc)
+#show: doc => journal_entry(date: datetime(day: 2, month: 12, year: 2024), doc)
 
 
 Work done today:

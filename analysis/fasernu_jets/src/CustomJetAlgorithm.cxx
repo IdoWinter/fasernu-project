@@ -2,6 +2,7 @@
 #include "Helpers.h"
 #include "CustomJetAlgorithm.h"
 #include <memory>
+#include <TMath.h>
 
 CustomJetAlgorithm::CustomJetAlgorithm() 
 : m_lepton(nullptr), m_neutrino(nullptr), m_candidate_jet_particles(), m_output_jet_particles(),
@@ -74,6 +75,7 @@ void CustomJetAlgorithm::add_jet_particle(Particle* particle)
     m_candidate_jet_particles.push_back(particle);
 }
 
+
 double CustomJetAlgorithm::findActualRadius()
 {
     if (!m_isValid) {
@@ -120,26 +122,27 @@ double CustomJetAlgorithm::findActualRadius()
     //           << "Jet phi: " << expected_jet_phi << std::endl;
 
     double max_distance = 0;
-    double total_energy = 0;
+    double totalPt = 0;
 
     std::vector<std::pair<double, Particle*>> particle_distances;
 
     for (auto particle : m_candidate_jet_particles)
     {
-        total_energy += particle->momentum->E();
+        totalPt += particle->momentum->Pt();
         double delta_rapidity = particle->momentum->PseudoRapidity() - expected_jet_rapidity;
         double delta_phi = particle->momentum->Phi() - expected_jet_phi;
         double delta_r = sqrt(delta_rapidity * delta_rapidity + delta_phi * delta_phi);
         if (abs(particle->pdgc) < 1e3)
         {
             // meson
-            this->m_baryon_total_distance += delta_r;
-            this->m_baryon_total_count++;
+            this->m_meson_total_distance += delta_r;
+            this->m_meson_total_count++;
         } else if (abs(particle->pdgc) < 1e6)
         {
             // baryon
-            this->m_meson_total_distance += delta_r;
-            this->m_meson_total_count++;
+            this->m_baryon_total_distance += delta_r;
+            this->m_baryon_total_count++;
+            
         }
         particle_distances.push_back(std::make_pair(delta_r, particle));
     }
@@ -149,13 +152,13 @@ double CustomJetAlgorithm::findActualRadius()
         return a.first < b.first;
     });
 
-    double current_energy = 0;
+    double currentPt = 0;
     for (auto particle_distance : particle_distances)
     {
         m_output_jet_particles.push_back(particle_distance.second);
-        current_energy += particle_distance.second->momentum->E();
+        currentPt += particle_distance.second->momentum->Pt();
         double current_distance = particle_distance.first;
-        if (current_energy > total_energy * 0.90)
+        if (currentPt > totalPt * 0.8)
         {
             return current_distance;
         }
@@ -170,11 +173,45 @@ double CustomJetAlgorithm::findActualRadius()
 TLorentzVector CustomJetAlgorithm::getJetVector()
 {
     TLorentzVector jet_vector;
-    for (auto particle : m_output_jet_particles)
+    for (auto particle : m_candidate_jet_particles)
     {
         jet_vector += *particle->momentum;
     }
     return jet_vector;
+}
+
+TLorentzVector CustomJetAlgorithm::getExpectedJetVector() {
+    TLorentzVector expectedJetVector;
+    expectedJetVector.SetPxPyPzE(
+        -m_lepton->momentum->Px(),
+        -m_lepton->momentum->Py(),
+        m_neutrino->momentum->Pz() - m_lepton->momentum->Pz(),
+        m_neutrino->momentum->E() - m_lepton->momentum->E());
+    return expectedJetVector;
+}
+
+
+TVector2 CustomJetAlgorithm::getDeltaPt() {
+    
+    auto jet = getJetVector();
+    auto jetPt = TVector2(jet.Px(), jet.Py());
+    auto leptonPt = TVector2(m_lepton->momentum->Px(), m_lepton->momentum->Py());
+    return jetPt + leptonPt;
+}
+
+double CustomJetAlgorithm::getDeltaAlphaT() {
+    auto deltaPt2D = getDeltaPt();
+    TVector3 deltaPt(deltaPt2D.X(), deltaPt2D.Y(), 0);
+    auto leptonPt = TVector3(m_lepton->momentum->Px(), m_lepton->momentum->Py(), 0);
+    return TMath::ACos(-leptonPt.Dot(deltaPt)/(leptonPt.Mag() * deltaPt.Mag())) * 180 / TMath::Pi();
+}
+
+double CustomJetAlgorithm::getDeltaPhi() {
+    auto jetVector = getJetVector();
+    TVector3 jetPt(jetVector.Px(), jetVector.Py(), 0);
+    auto leptonPt = TVector3(m_lepton->momentum->Px(), m_lepton->momentum->Py(), 0);
+    return TMath::ACos(-leptonPt.Dot(jetPt)/(leptonPt.Mag() * jetPt.Mag())) * 180 / TMath::Pi();
+
 }
 
 std::vector<Particle*> CustomJetAlgorithm::getMissingParticles()

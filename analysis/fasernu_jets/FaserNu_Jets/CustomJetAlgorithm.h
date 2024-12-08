@@ -43,7 +43,14 @@ public:
 
    TLorentzVector getJetVector();
 
-   std::vector<Particle*> getMissingParticles();
+   TLorentzVector getExpectedJetVector();
+
+   TVector2 getDeltaPt();
+   double getDeltaAlphaT();
+
+   double getDeltaPhi();
+
+   std::vector<Particle *> getMissingParticles();
    double getAverageBaryonDistance();
    double getAverageMesonDistance();
 

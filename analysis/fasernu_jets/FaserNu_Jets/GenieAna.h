@@ -47,6 +47,9 @@ protected:
    TH1D* h_radius_of_jet_in_event;
    TH1D* h_missing_energy_in_jet;
    TH1D* h_missing_momentum_in_jet;
+   TH1D* h_delta_pt;
+   TH1D* h_delta_alpha_t;
+   TH1D* h_delta_phi_t;
 
    std::map<std::string, std::vector<std::shared_ptr<TH1D>>> h_regime_histograms; 
 
