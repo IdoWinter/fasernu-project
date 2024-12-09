@@ -2,6 +2,7 @@
 #include "FaserNu_Jets/GenieEvent.h"
 #include "FaserNu_Jets/CustomJetAlgorithm.h"
 #include "TH1D.h"
+#include "TGraph.h"
 #include "TCanvas.h"
 #include "TFile.h"
 #include "fastjet/PseudoJet.hh"
@@ -9,6 +10,7 @@
 #include <vector>
 #include <numeric>
 #include "GenieAna.h"
+#include <FaserNu_Jets/Helpers.h>
 
 GenieAna::GenieAna()
 {
@@ -65,6 +67,8 @@ void GenieAna::init()
     h_delta_phi_t = new TH1D("#delta#phi_{t}", "#delta#phi_{t}; #delta#phi_{t}; N", 100, 0, 60);
     m_histos.push_back(h_delta_phi_t);
 
+
+
     createRegimeHistograms();
 
     TFile *f_in = TFile::Open(m_inputFile.c_str());
@@ -112,6 +116,9 @@ void GenieAna::createRegimeHistograms()
         return std::make_shared<TH1D>("averageMesonDistance", "Average Meson Distance; Distance; N", 100, 0, 10);
     });
 
+    createRegimeHistogram("EnergyCorrelationDoubleRatio", []() {
+        return std::make_shared<TH1D>("EnergyCorrelationDoubleRatio", "Energy Correlation Double Ratio; Energy Correlation Double Ratio; N", 100, 0, 10);
+    });
 }
 
 void GenieAna::createRegimeHistogram(std::string name, std::shared_ptr<TH1D> (*createHistogramFunction)() ) 
@@ -125,113 +132,132 @@ void GenieAna::createRegimeHistogram(std::string name, std::shared_ptr<TH1D> (*c
 
 void GenieAna::process()
 {
+    int nEvents = m_tree->GetEntries();
+    auto cb = [&](double radius, int nBaryons, int nMesons, double E_baryons, double E_mesons, CustomJetAlgorithm* jetAlgorithm) {
+        this->fillHistograms(radius, nBaryons, nMesons, E_baryons, E_mesons, jetAlgorithm);
+    };
+    
+    // for (int i = 0; i < nEvents; i++)
+    // {
+    //     analyzeSingleEvent(i, cb);
+    // }    
+
+    auto singleEvent =  [&](double radius, int nBaryons, int nMesons, double E_baryons, double E_mesons, CustomJetAlgorithm* jetAlgorithm) {
+        this->inspectSingleEvent(radius, nBaryons, nMesons, E_baryons, E_mesons, jetAlgorithm);
+    };
+
+    for (int i = 0; i < 5; i++)
+    {
+        analyzeSingleEvent(i, singleEvent);
+    }
+}
+
+void GenieAna::analyzeSingleEvent(int i, std::function<void(double, int, int, double, double, CustomJetAlgorithm*)> cb)
+{
     CustomJetAlgorithm *jet_algorithm;
 
+    // std::cout << "Processing item " << i << std::endl;
+    m_tree->GetEntry(i);
+    auto incomingE = m_genieEvent->E->at(0);
+    auto px_incoming = m_genieEvent->px->at(0);
+    auto py_incoming = m_genieEvent->py->at(0);
+    auto pz_incoming = m_genieEvent->pz->at(0);
 
-    int nEvents = m_tree->GetEntries();
-    for (int i = 0; i < nEvents; i++)
+    h_incomingE->Fill(incomingE);
+
+    int nMesons = 0;
+    int nBaryons = 0;
+    double E_mesons = 0;
+    double E_baryons = 0;
+    double E_lepton = 0;
+    double px_lepton = 0;
+    double py_lepton = 0;
+    double pz_lepton = 0;
+    double px_neutrino = 0;
+    double py_neutrino = 0;
+    double pz_neutrino = 0;
+
+    double px_transfered = px_incoming;
+    double py_transfered = py_incoming;
+    double pz_transfered = pz_incoming;
+    double E_transfered = incomingE;
+
+    jet_algorithm = new CustomJetAlgorithm();
+
+    for (int i_part = 0; i_part < m_genieEvent->pdgc->size(); i_part++)
     {
-        // std::cout << "Processing item " << i << std::endl;
-        m_tree->GetEntry(i);
-        auto incomingE = m_genieEvent->E->at(0);
-        auto px_incoming = m_genieEvent->px->at(0);
-        auto py_incoming = m_genieEvent->py->at(0);
-        auto pz_incoming = m_genieEvent->pz->at(0);
+        auto pdgc = m_genieEvent->pdgc->at(i_part);
+        auto status = m_genieEvent->status->at(i_part);
+        auto E = m_genieEvent->E->at(i_part);
+        auto px = m_genieEvent->px->at(i_part);
+        auto py = m_genieEvent->py->at(i_part);
+        auto pz = m_genieEvent->pz->at(i_part);
+        auto name = m_genieEvent->name->at(i_part);
 
-        h_incomingE->Fill(incomingE);
-
-        int nMesons = 0;
-        int nBaryons = 0;
-        double E_mesons = 0;
-        double E_baryons = 0;
-        double E_lepton = 0;
-        double px_lepton = 0;
-        double py_lepton = 0;
-        double pz_lepton = 0;
-        double px_neutrino = 0;
-        double py_neutrino = 0;
-        double pz_neutrino = 0;
-
-        double px_transfered = px_incoming;
-        double py_transfered = py_incoming;
-        double pz_transfered = pz_incoming;
-        double E_transfered = incomingE;
-
-        jet_algorithm = new CustomJetAlgorithm();
-
-        for (int i_part = 0; i_part < m_genieEvent->pdgc->size(); i_part++)
+        if (status > 1)
         {
-            auto pdgc = m_genieEvent->pdgc->at(i_part);
-            auto status = m_genieEvent->status->at(i_part);
-            auto E = m_genieEvent->E->at(i_part);
-            auto px = m_genieEvent->px->at(i_part);
-            auto py = m_genieEvent->py->at(i_part);
-            auto pz = m_genieEvent->pz->at(i_part);
-            auto name = m_genieEvent->name->at(i_part);
-
-            if (status > 1)
-            {
-                continue; // this is not a final state particle
-            }
-
-            if (pdgc >= 10e6)
-            {
-                // This is the nucleus.
-                continue;
-            }
-
-            jet_algorithm->addParticle(new Particle(
-                new TLorentzVector(px, py, pz, E),
-                pdgc,
-                name));
-
-            if (abs(pdgc) < 20)
-            {
-                h_outgoing_leptonE->Fill(E);
-                h_outgoing_leptonEfrac->Fill(E / incomingE);
-                E_lepton = E;
-                h_process->Fill(abs(pdgc) % 2);
-                px_transfered -= px;
-                py_transfered -= py;
-                pz_transfered -= pz;
-                E_transfered -= E;
-            }
-
-            if (abs(pdgc) > 100 && abs(pdgc) < 1000)
-            {
-                nMesons++;
-                E_mesons += E;
-            }
-            if (abs(pdgc) > 1000 && abs(pdgc) < 1e6)
-            {
-                nBaryons++;
-                E_baryons += E;
-            }
+            continue; // this is not a final state particle
         }
 
-        // Perform jet clustering with current radius R
-        auto radius = jet_algorithm->findActualRadius();
-
-        // Store the number of jets for this event
-        auto jet_vector = jet_algorithm->getJetVector();
-
-        if (!jet_algorithm->isValid())
+        if (pdgc >= 10e6)
         {
+            // This is the nucleus.
             continue;
         }
 
-        h_delta_pt->Fill(jet_algorithm->getDeltaPt().Mod());
-        h_delta_alpha_t->Fill(jet_algorithm->getDeltaAlphaT());
-        h_delta_phi_t->Fill(jet_algorithm->getDeltaPhi());
+        jet_algorithm->addParticle(new Particle(
+            new TLorentzVector(px, py, pz, E),
+            pdgc,
+            name));
 
-        h_radius_of_jet_in_event->Fill(radius);
+        if (abs(pdgc) < 20)
+        {
+            h_outgoing_leptonE->Fill(E);
+            h_outgoing_leptonEfrac->Fill(E / incomingE);
+            E_lepton = E;
+            h_process->Fill(abs(pdgc) % 2);
+            px_transfered -= px;
+            py_transfered -= py;
+            pz_transfered -= pz;
+            E_transfered -= E;
+        }
 
-        fillHistograms(radius, nBaryons, nMesons, E_baryons, E_mesons, jet_algorithm);
+        if (abs(pdgc) > 100 && abs(pdgc) < 1000)
+        {
+            nMesons++;
+            E_mesons += E;
+        }
+        if (abs(pdgc) > 1000 && abs(pdgc) < 1e6)
+        {
+            nBaryons++;
+            E_baryons += E;
+        }
     }
+
+    // Perform jet clustering with current radius R
+    auto radius = jet_algorithm->findActualRadius();
+
+    // Store the number of jets for this event
+    auto jet_vector = jet_algorithm->getJetVector();
+
+    if (!jet_algorithm->isValid())
+    {
+        return;
+    }
+
+
+    cb(radius, nBaryons, nMesons, E_baryons, E_mesons, jet_algorithm);
 }
 
 void GenieAna::fillHistograms(double radius, int nBaryons, int nMesons, double E_baryons, double E_mesons, CustomJetAlgorithm* jetAlgorithm)
 {
+    h_delta_pt->Fill(jetAlgorithm->getDeltaPt().Mod());
+    h_delta_alpha_t->Fill(jetAlgorithm->getDeltaAlphaT());
+    h_delta_phi_t->Fill(jetAlgorithm->getDeltaPhi());
+
+    h_radius_of_jet_in_event->Fill(radius);
+
+
     float first_regime_cutoff = 2.5;
     float second_regime_initial = 4.3;
     int regime = -1;
@@ -266,8 +292,34 @@ void GenieAna::fillHistograms(double radius, int nBaryons, int nMesons, double E
     hist->Fill(jetAlgorithm->getAverageBaryonDistance());
     hist = h_regime_histograms.at("averageMesonDistance").at(regime);
     hist->Fill(jetAlgorithm->getAverageMesonDistance());
-    
+
+    hist = h_regime_histograms.at("EnergyCorrelationDoubleRatio").at(regime);
+    hist->Fill(jetAlgorithm->CalculateEnergyCorrelationDoubleRatio(3, 1.0));
 }
+
+
+void GenieAna::inspectSingleEvent(double radius, int nBaryons, int nMesons, double E_baryons, double E_mesons, CustomJetAlgorithm* jetAlgorithm) {
+    // Create graph of energy correlation double ratio
+    auto beta = linspace(0.1, 2.0, 400);
+    auto energyCorrelationDoubleRatio = calcFunc(beta, [&](double beta) {
+        return jetAlgorithm->CalculateEnergyCorrelationDoubleRatio(3, beta);
+    });
+
+    TGraph *graph = new TGraph(beta, energyCorrelationDoubleRatio);
+    graph->SetTitle("Energy Correlation Double Ratio; #beta; Energy Correlation Double Ratio");
+    
+
+    TCanvas *canvas = new TCanvas("canvas", "Energy Correlation Graph", 800, 600);
+    canvas->SetGrid();
+
+    graph->Draw("AL");
+    // Save graph to a file
+    std::string graphFileName = "ecr_" + std::to_string(radius) + ".pdf";
+    canvas->SaveAs(graphFileName.c_str());
+}
+
+
+
 void GenieAna::close()
 {
     f_results->cd();

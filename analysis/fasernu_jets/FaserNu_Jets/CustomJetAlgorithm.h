@@ -7,6 +7,7 @@
 #include "TH1D.h"
 #include <TLorentzVector.h>
 #include <cmath>
+#include <fastjet/PseudoJet.hh>
 
 #include <string>
 
@@ -41,6 +42,10 @@ public:
    
    double findActualRadius();
 
+   double calculateEnergyCorrelation(int N, double beta);
+
+   double CalculateEnergyCorrelationDoubleRatio(int N, double beta);
+
    TLorentzVector getJetVector();
 
    TLorentzVector getExpectedJetVector();
@@ -64,6 +69,8 @@ public:
     Particle* m_lepton;
     Particle* m_neutrino;
     std::vector<Particle*> m_candidate_jet_particles;
+    std::vector<fastjet::PseudoJet> m_jet_particles;
+    fastjet::PseudoJet m_jet;
 
     double m_baryon_total_distance = 0;
     double m_baryon_total_count = 0;

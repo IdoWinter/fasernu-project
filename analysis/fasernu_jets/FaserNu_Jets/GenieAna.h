@@ -23,8 +23,12 @@ public:
 protected:
    void createRegimeHistograms();
    void createRegimeHistogram(std::string name, std::shared_ptr<TH1D> (*createHistogramFunction)()); 
+   void analyzeSingleEvent(int i, std::function<void(double, int, int, double, double, CustomJetAlgorithm*)> cb);
+
    void fillHistograms(double radius, int nBaryons, int nMesons, double E_baryons, double E_mesons, CustomJetAlgorithm* jetAlgorithm);
-   
+
+   void inspectSingleEvent(double radius, int nBaryons, int nMesons, double E_baryons, double E_mesons, CustomJetAlgorithm *jetAlgorithm);
+
    GenieEvent* m_genieEvent; 
    std::string m_inputFile;
    std::string m_outputFile;

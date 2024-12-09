@@ -11,8 +11,6 @@ Meeting summary:
 - Another observable we could look at is something similar to N-subjettiness, but we expect that we are in a different case (we don't expect 2 vs 1 prong, but rather a different radius of the jet).
 
 
-
-
 Relevant sources:
 
 - #source("https://arxiv.org/pdf/1305.0007")["Energy Correlation Functions for Jet Substructure [arXiv:1305.0007]"]

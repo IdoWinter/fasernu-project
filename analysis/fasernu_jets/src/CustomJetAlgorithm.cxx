@@ -3,6 +3,12 @@
 #include "CustomJetAlgorithm.h"
 #include <memory>
 #include <TMath.h>
+#include <fastjet/contrib/EnergyCorrelator.hh>
+#include <fastjet/JetDefinition.hh>
+#include <fastjet/ClusterSequence.hh>
+#include <cmath>
+#include <algorithm>
+
 
 CustomJetAlgorithm::CustomJetAlgorithm() 
 : m_lepton(nullptr), m_neutrino(nullptr), m_candidate_jet_particles(), m_output_jet_particles(),
@@ -73,6 +79,11 @@ void CustomJetAlgorithm::add_neutrino(Particle* neutrino)
 void CustomJetAlgorithm::add_jet_particle(Particle* particle)
 {
     m_candidate_jet_particles.push_back(particle);
+    m_jet_particles.push_back(
+        fastjet::PseudoJet(particle->momentum->Px(),
+                           particle->momentum->Py(),
+                           particle->momentum->Pz(),
+                           particle->momentum->E()));
 }
 
 
@@ -164,10 +175,52 @@ double CustomJetAlgorithm::findActualRadius()
         }
     }
 
+        fastjet::JetDefinition jet_def(fastjet::cambridge_algorithm, 1000.0);
+    fastjet::ClusterSequence cs(m_jet_particles, jet_def);
+
+    std::vector<fastjet::PseudoJet> jets = cs.inclusive_jets();
+    if (jets.size() != 1)
+    {
+        std::cerr << "Expected 1 jet, got " << jets.size() << std::endl;
+        this->m_isValid = false;
+        return -1;
+    }
+
+    m_jet = jets[0];
+
     // should not be possible since the energy should reach 90% before the last particle
     this->m_isValid = false;
     return -1;
 }
+
+double CustomJetAlgorithm::calculateEnergyCorrelation(int N, double beta)
+{  
+    // using namespace fastjet::contrib;
+    // EnergyCorrelatorDoubleRatio ecf(2, beta);
+    // // Create a jet definition that will include all particles
+    // fastjet::JetDefinition jet_def(fastjet::cambridge_algorithm, 1000000.0);
+    // fastjet::ClusterSequence cs(m_jet_particles, jet_def);
+
+    // std::vector<fastjet::PseudoJet> jets = cs.inclusive_jets(1.0);
+    // if (jets.size() != 1)
+    // {
+    //     std::cerr << "Expected 1 jet, got " << jets.size() << std::endl;
+    //     return -1;
+    // }
+
+    // fastjet::PseudoJet jet = jets[0];
+    // double ecf_ratio = ecf.result(jet);
+    // return ecf_ratio;
+    return 0;
+}
+
+double CustomJetAlgorithm::CalculateEnergyCorrelationDoubleRatio(int N, double beta) {
+    using namespace fastjet::contrib;
+    EnergyCorrelatorDoubleRatio ecf(N, beta);
+    double ecf_ratio = ecf.result(m_jet);
+    return ecf_ratio;
+}
+
 
 
 TLorentzVector CustomJetAlgorithm::getJetVector()

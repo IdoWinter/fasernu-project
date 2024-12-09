@@ -24,12 +24,21 @@ execute_process(COMMAND fastjet-config --libs
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 
+if(DEFINED ENV{FASTJET_CONTRIB_DIR})
+      # Use the environment variable for include and library paths
+      set(FASTJET_CONTRIB_DIR $ENV{FASTJET_CONTRIB_DIR})
+else()
+      message(FATAL_ERROR "Environment variable FJCONTRIB_PATH is not set. Please set it to the path of FastJet contrib.")
+endif()
+
 # Locate the ROOT package and define a number of useful targets and variables.
    find_package(ROOT REQUIRED RIO Graf Hist Net Core)
    # REQUIRED COMPONENTS RIO Net)
    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/FaserNu_Jets)
    include_directories(${CMAKE_CURRENT_SOURCE_DIR})
    include_directories(${FASTJET_INCLUDE_DIRS})
+   include_directories(${FASTJET_CONTRIB_DIR}/include)
+   link_directories(${FASTJET_CONTRIB_DIR}/lib)
 # Create a shared library.
 # Passing cmake targets such as `ROOT::RIO` as dependencies (rather than plain
 # library names for example via ${ROOT_LIBRARIES}) ensures that properties such as required
@@ -38,7 +47,7 @@ execute_process(COMMAND fastjet-config --libs
 # same C++ standard as ROOT was compiled with.
    file(GLOB SOURCES "src/*.cxx")
    add_library(GenieEvent SHARED ${SOURCES})
-   target_link_libraries(GenieEvent PUBLIC ROOT::Core ROOT::RIO ROOT::Net ROOT::Hist ROOT::Tree ROOT::Graf ROOT::Graf3d ROOT::Gpad ROOT::Physics)   
+   target_link_libraries(GenieEvent PUBLIC ROOT::Core ROOT::RIO ROOT::Net ROOT::Hist ROOT::Tree ROOT::Graf ROOT::Graf3d ROOT::Gpad ROOT::Physics EnergyCorrelator)   
 
    set(CMAKE_BUILD_TYPE Debug)
 # Create the main program using the library.
