@@ -137,19 +137,19 @@ void GenieAna::process()
         this->fillHistograms(radius, nBaryons, nMesons, E_baryons, E_mesons, jetAlgorithm);
     };
     
-    // for (int i = 0; i < nEvents; i++)
-    // {
-    //     analyzeSingleEvent(i, cb);
-    // }    
+    for (int i = 0; i < nEvents; i++)
+    {
+        analyzeSingleEvent(i, cb);
+    }    
 
     auto singleEvent =  [&](double radius, int nBaryons, int nMesons, double E_baryons, double E_mesons, CustomJetAlgorithm* jetAlgorithm) {
         this->inspectSingleEvent(radius, nBaryons, nMesons, E_baryons, E_mesons, jetAlgorithm);
     };
 
-    for (int i = 0; i < 5; i++)
-    {
-        analyzeSingleEvent(i, singleEvent);
-    }
+    // for (int i = 0; i < 5; i++)
+    // {
+    //     analyzeSingleEvent(i, singleEvent);
+    // }
 }
 
 void GenieAna::analyzeSingleEvent(int i, std::function<void(double, int, int, double, double, CustomJetAlgorithm*)> cb)
@@ -294,7 +294,7 @@ void GenieAna::fillHistograms(double radius, int nBaryons, int nMesons, double E
     hist->Fill(jetAlgorithm->getAverageMesonDistance());
 
     hist = h_regime_histograms.at("EnergyCorrelationDoubleRatio").at(regime);
-    hist->Fill(jetAlgorithm->CalculateEnergyCorrelationDoubleRatio(3, 1.0));
+    hist->Fill(jetAlgorithm->CalculateEnergyCorrelationDoubleRatio(2, 3));
 }
 
 

@@ -8,7 +8,6 @@
 #include <TLorentzVector.h>
 #include <cmath>
 #include <fastjet/PseudoJet.hh>
-
 #include <string>
 
 
@@ -70,7 +69,8 @@ public:
     Particle* m_neutrino;
     std::vector<Particle*> m_candidate_jet_particles;
     std::vector<fastjet::PseudoJet> m_jet_particles;
-    fastjet::PseudoJet m_jet;
+    std::vector<fastjet::PseudoJet> m_chosenParticles;
+
 
     double m_baryon_total_distance = 0;
     double m_baryon_total_count = 0;

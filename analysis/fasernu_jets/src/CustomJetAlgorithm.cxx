@@ -1,10 +1,9 @@
 #include "FaserNu_Jets/CustomJetAlgorithm.h"
+
 #include "Helpers.h"
-#include "CustomJetAlgorithm.h"
 #include <memory>
 #include <TMath.h>
 #include <fastjet/contrib/EnergyCorrelator.hh>
-#include <fastjet/JetDefinition.hh>
 #include <fastjet/ClusterSequence.hh>
 #include <cmath>
 #include <algorithm>
@@ -163,6 +162,16 @@ double CustomJetAlgorithm::findActualRadius()
         return a.first < b.first;
     });
 
+    for (auto [distance, particle] : particle_distances)
+    {
+        if (distance < 2) {
+            m_chosenParticles.push_back(fastjet::PseudoJet(particle->momentum->Px(),
+                                                           particle->momentum->Py(),
+                                                           particle->momentum->Pz(),
+                                                           particle->momentum->E()));
+        }
+    }
+
     double currentPt = 0;
     for (auto particle_distance : particle_distances)
     {
@@ -175,8 +184,23 @@ double CustomJetAlgorithm::findActualRadius()
         }
     }
 
-        fastjet::JetDefinition jet_def(fastjet::cambridge_algorithm, 1000.0);
-    fastjet::ClusterSequence cs(m_jet_particles, jet_def);
+
+    // should not be possible since the energy should reach 90% before the last particle
+    this->m_isValid = false;
+    return -1;
+}
+
+double CustomJetAlgorithm::calculateEnergyCorrelation(int N, double beta)
+{  
+    return 0;
+}
+
+double CustomJetAlgorithm::CalculateEnergyCorrelationDoubleRatio(int N, double beta) {
+    using namespace fastjet::contrib;
+
+
+    fastjet::JetDefinition jet_def(fastjet::cambridge_algorithm, 1000.0);
+    fastjet::ClusterSequence cs(m_chosenParticles, jet_def);
 
     std::vector<fastjet::PseudoJet> jets = cs.inclusive_jets();
     if (jets.size() != 1)
@@ -186,38 +210,10 @@ double CustomJetAlgorithm::findActualRadius()
         return -1;
     }
 
-    m_jet = jets[0];
+    fastjet::PseudoJet jet = jets[0];
 
-    // should not be possible since the energy should reach 90% before the last particle
-    this->m_isValid = false;
-    return -1;
-}
-
-double CustomJetAlgorithm::calculateEnergyCorrelation(int N, double beta)
-{  
-    // using namespace fastjet::contrib;
-    // EnergyCorrelatorDoubleRatio ecf(2, beta);
-    // // Create a jet definition that will include all particles
-    // fastjet::JetDefinition jet_def(fastjet::cambridge_algorithm, 1000000.0);
-    // fastjet::ClusterSequence cs(m_jet_particles, jet_def);
-
-    // std::vector<fastjet::PseudoJet> jets = cs.inclusive_jets(1.0);
-    // if (jets.size() != 1)
-    // {
-    //     std::cerr << "Expected 1 jet, got " << jets.size() << std::endl;
-    //     return -1;
-    // }
-
-    // fastjet::PseudoJet jet = jets[0];
-    // double ecf_ratio = ecf.result(jet);
-    // return ecf_ratio;
-    return 0;
-}
-
-double CustomJetAlgorithm::CalculateEnergyCorrelationDoubleRatio(int N, double beta) {
-    using namespace fastjet::contrib;
     EnergyCorrelatorDoubleRatio ecf(N, beta);
-    double ecf_ratio = ecf.result(m_jet);
+    double ecf_ratio = ecf.result(jet);
     return ecf_ratio;
 }
 
