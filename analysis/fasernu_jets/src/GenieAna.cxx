@@ -4,6 +4,7 @@
 #include "TH1D.h"
 #include "TGraph.h"
 #include "TCanvas.h"
+#include "TLegend.h"
 #include "TFile.h"
 #include "fastjet/PseudoJet.hh"
 #include <iostream>
@@ -29,6 +30,7 @@ void GenieAna::setOutput(std::string out)
 {
     m_outputFile = out;
 }
+
 void GenieAna::init()
 {
     f_results = TFile::Open("results.root", "RECREATE");
@@ -56,8 +58,13 @@ void GenieAna::init()
     h_outgoing_baryonEfrac = new TH1D("Outgoing Baryon Efrac", "Outgoing Baryon Efrac", 102, -0.1, 1.1);
     // m_histos.push_back(h_outgoing_baryonEfrac);
 
-    h_radius_of_jet_in_event = new TH1D("Radius of jet", "Radius of jet; radius; number of events", int((m_max_radius - m_min_radius) / m_radius_step), m_min_radius, m_max_radius);
+    h_radius_of_jet_in_event = new TH1D("Radius of jet", "Radius of jet; radius; relative probability", 100, 0, 10);
+    // h_radius_of_jet_in_event->GetYaxis()->SetTitleOffset(1.5);
     // m_histos.push_back(h_radius_of_jet_in_event);
+
+
+    h_energy_containment_per_radius = new TH2F("Energy Containment per Radius", "Energy Containment per Radius; Radius; Energy Containment", 
+    int((m_max_radius-m_min_radius)/m_radius_step), m_min_radius, m_max_radius, 100, m_minimum_energy_containment, 1);
 
     h_delta_pt = new TH1D("Delta Pt", "Delta Pt; Delta Pt [GeV]; N", 500, 0, 0.5);
     // m_histos.push_back(h_delta_pt);
@@ -65,7 +72,7 @@ void GenieAna::init()
     // m_histos.push_back(h_delta_alpha_t);
     
     h_delta_phi_t = new TH1D("#delta#phi_{t}", "#delta#phi_{t}; #delta#phi_{t}; N", 100, 0, 60);
-    m_histos.push_back(h_delta_phi_t);
+    // m_histos.push_back(h_delta_phi_t);
 
 
 
@@ -117,7 +124,7 @@ void GenieAna::createRegimeHistograms()
     });
 
     createRegimeHistogram("EnergyCorrelationDoubleRatio", []() {
-        return std::make_shared<TH1D>("EnergyCorrelationDoubleRatio", "Energy Correlation Double Ratio; Energy Correlation Double Ratio; N", 100, 0, 10);
+        return std::make_shared<TH1D>("EnergyCorrelationDoubleRatio", "Energy Correlation Double Ratio; Energy Correlation Double Ratio; N", 100, 0, 1);
     });
 }
 
@@ -126,7 +133,9 @@ void GenieAna::createRegimeHistogram(std::string name, std::shared_ptr<TH1D> (*c
     h_regime_histograms[name] = std::vector<std::shared_ptr<TH1D>>();
     for (int i = 0; i < 2; i++)
     {
-        h_regime_histograms[name].push_back(createHistogramFunction());
+        auto hist = createHistogramFunction();
+        hist->GetYaxis()->SetTitle("Relative Probability");
+        h_regime_histograms[name].push_back(hist);
     }
 }
 
@@ -146,7 +155,7 @@ void GenieAna::process()
         this->inspectSingleEvent(radius, nBaryons, nMesons, E_baryons, E_mesons, jetAlgorithm);
     };
 
-    // for (int i = 0; i < 5; i++)
+    // for (int i = 0; i < 1; i++)
     // {
     //     analyzeSingleEvent(i, singleEvent);
     // }
@@ -294,9 +303,16 @@ void GenieAna::fillHistograms(double radius, int nBaryons, int nMesons, double E
     hist->Fill(jetAlgorithm->getAverageMesonDistance());
 
     hist = h_regime_histograms.at("EnergyCorrelationDoubleRatio").at(regime);
-    hist->Fill(jetAlgorithm->CalculateEnergyCorrelationDoubleRatio(2, 3));
-}
+    hist->Fill(jetAlgorithm->CalculateEnergyCorrelationDoubleRatio(2, 0.3));
 
+    for (double r = m_min_radius; r < m_max_radius; r += m_radius_step) {
+        double energyContainment = jetAlgorithm->calculateEnergyContainmentForRadius(r);
+        if (energyContainment < m_minimum_energy_containment) {
+            continue;
+        }
+        h_energy_containment_per_radius->Fill(r, energyContainment);  
+    } 
+}
 
 void GenieAna::inspectSingleEvent(double radius, int nBaryons, int nMesons, double E_baryons, double E_mesons, CustomJetAlgorithm* jetAlgorithm) {
     // Create graph of energy correlation double ratio
@@ -318,20 +334,39 @@ void GenieAna::inspectSingleEvent(double radius, int nBaryons, int nMesons, doub
     canvas->SaveAs(graphFileName.c_str());
 }
 
-
-
 void GenieAna::close()
 {
     f_results->cd();
     TCanvas *canvas = new TCanvas("canvas", "Canvas for Histograms", 800, 600);
     
-    for (auto h : m_histos)
-    {
-        h->Draw();
-        
-    }
+    // for (auto h : m_histos)
+    // {
+    //     h->Scale(1.0 / h->Integral());
+    //     h->Draw("HIST");
+    // }
     
-    canvas->SaveAs("output.svg");
+    // canvas->SaveAs("output.png");
+
+    for (int xBin = 1; xBin <= h_energy_containment_per_radius->GetNbinsX(); ++xBin) {
+        double sum = 0.0;
+        for (int yBin = 1; yBin <= h_energy_containment_per_radius->GetNbinsY(); ++yBin) {
+            sum += h_energy_containment_per_radius->GetBinContent(xBin, yBin);
+            if (h_energy_containment_per_radius->GetBinContent(xBin, yBin) == 0) {
+                h_energy_containment_per_radius->SetBinContent(xBin, yBin, 0.01);  // Set to a small value
+            }
+        }
+
+        for (int yBin = 1; yBin <= h_energy_containment_per_radius->GetNbinsY(); ++yBin) {
+            // Normalize the histogram
+            h_energy_containment_per_radius->SetBinContent(xBin, yBin, h_energy_containment_per_radius->GetBinContent(xBin, yBin) / sum);
+        }
+    }
+    h_energy_containment_per_radius->SetContour(100);
+
+
+    h_energy_containment_per_radius->Draw("COLZ");
+    h_energy_containment_per_radius->SetStats(0); // Turn off the statistics box
+    canvas->SaveAs("energy_containment_per_radius.png");
 
     std::string pdfFileName = "RegimeHistograms.pdf";
     bool firstPage = true;
@@ -344,16 +379,29 @@ void GenieAna::close()
         std::string canvasName = "canvas_" + regime.first;
         TCanvas* canvas = new TCanvas(canvasName.c_str(), canvasName.c_str(), 800, 600);
 
-        int nHistograms = regime.second.size();
-        canvas->Divide(1, nHistograms); // Divide canvas into nHistograms pads vertically
+        // Add a legend
+        TLegend *legend = new TLegend(0.1, 0.8, 0.2, 0.9); // Adjust position as needed
+        legend->Draw();
 
-        int padNumber = 1;
-        for (auto hist : regime.second)
+        bool first = true;
+        for (int i = 0; i < regime.second.size(); ++i)
         {
-            canvas->cd(padNumber);
-            hist->Draw();
-            padNumber++;
+            auto hist = regime.second.at(i);
+            hist->Scale(1.0 / hist->Integral()); // Normalize histogram to 1
+
+            if (first)
+            {
+                first = false;
+                hist->SetLineColor(kBlue);
+                hist->Draw("HIST");
+            } else {
+                hist->SetLineColor(kRed);
+                hist->Draw("HIST SAME");
+            }
+            legend->AddEntry(hist.get(), ("Regime " + std::to_string(i)).c_str(), "l");
         }
+
+        legend->Draw();
 
         // Save canvas to a PDF file, creating a new page for each regime
         if (firstPage)

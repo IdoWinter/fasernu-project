@@ -4,6 +4,7 @@
 #include "FaserNu_Jets/GenieEvent.h"
 #include "TTree.h"
 #include "TH1D.h"
+#include "TH2F.h"
 #include "TLorentzVector.h"
 #include "FaserNu_Jets/CustomJetAlgorithm.h"
 
@@ -35,8 +36,8 @@ protected:
 
    std::vector<TH1D*> m_histos;
    double m_min_radius = 0.1;
-   double m_max_radius = 15;
-   double m_radius_step = 0.01;
+   double m_max_radius = 8;
+   double m_radius_step = 0.3;
 
    TH1D* h_process;
    TH1D* h_nJets;
@@ -51,6 +52,9 @@ protected:
    TH1D* h_radius_of_jet_in_event;
    TH1D* h_missing_energy_in_jet;
    TH1D* h_missing_momentum_in_jet;
+   TH2F* h_energy_containment_per_radius;
+
+   double m_minimum_energy_containment = 0.6;
    TH1D* h_delta_pt;
    TH1D* h_delta_alpha_t;
    TH1D* h_delta_phi_t;

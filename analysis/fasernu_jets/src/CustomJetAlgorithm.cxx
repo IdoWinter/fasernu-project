@@ -7,6 +7,7 @@
 #include <fastjet/ClusterSequence.hh>
 #include <cmath>
 #include <algorithm>
+#include "CustomJetAlgorithm.h"
 
 
 CustomJetAlgorithm::CustomJetAlgorithm() 
@@ -96,12 +97,10 @@ double CustomJetAlgorithm::findActualRadius()
         std::cerr << "Missing lepton in event" << std::endl;
         return -1;
     }
-
     if (m_neutrino == nullptr) {
         std::cerr << "Missing neutrino in event" << std::endl;
         return -1;
     }
-
     if (m_candidate_jet_particles.size() == 0) {
         m_isValid = false;
         std::cerr << "Missing jet particles in event" << std::endl;
@@ -115,21 +114,8 @@ double CustomJetAlgorithm::findActualRadius()
         m_neutrino->momentum->Pz() - m_lepton->momentum->Pz(),
         m_neutrino->momentum->E() - m_lepton->momentum->E());
     
-    // std::cout << "lepton is: " << *m_lepton << std::endl;
-    // std::cout << "neutrino is: " << *m_neutrino << std::endl;
-    
-
     double expected_jet_rapidity = expected_jet_vector->PseudoRapidity();
     double expected_jet_phi = expected_jet_vector->Phi();
-
-    // std::cout << "Expected Jet Vector:" << std::endl;
-    // std::cout << "Px: " << expected_jet_vector->Px() << std::endl;
-    // std::cout << "Py: " << expected_jet_vector->Py() << std::endl;
-    // std::cout << "Pz: " << expected_jet_vector->Pz() << std::endl;
-    // std::cout << "E: " << expected_jet_vector->E() << std::endl;
-
-    // std::cout << "Jet rapidity: " << expected_jet_rapidity << std::endl
-    //           << "Jet phi: " << expected_jet_phi << std::endl;
 
     double max_distance = 0;
     double totalPt = 0;
@@ -199,13 +185,17 @@ double CustomJetAlgorithm::CalculateEnergyCorrelationDoubleRatio(int N, double b
     using namespace fastjet::contrib;
 
 
-    fastjet::JetDefinition jet_def(fastjet::cambridge_algorithm, 1000.0);
-    fastjet::ClusterSequence cs(m_chosenParticles, jet_def);
+    fastjet::JetDefinition jet_def(fastjet::antikt_algorithm, 2.0);
+    fastjet::ClusterSequence cs(m_jet_particles, jet_def);
 
     std::vector<fastjet::PseudoJet> jets = cs.inclusive_jets();
-    if (jets.size() != 1)
+    // sort jets by pt largest to smallest
+    std::sort(jets.begin(), jets.end(), [](fastjet::PseudoJet a, fastjet::PseudoJet b) {
+        return a.pt() > b.pt();
+    });
+    if (jets.size() == 0)
     {
-        std::cerr << "Expected 1 jet, got " << jets.size() << std::endl;
+        std::cerr << "Expected at least 1 jet, got 0" << std::endl;
         this->m_isValid = false;
         return -1;
     }
@@ -274,6 +264,27 @@ std::vector<Particle*> CustomJetAlgorithm::getMissingParticles()
         }
     }
     return missing_particles;
+}
+
+double CustomJetAlgorithm::calculateEnergyContainmentForRadius(double radius) {
+    fastjet::JetDefinition jet_def(fastjet::antikt_algorithm, radius);
+    fastjet::ClusterSequence cs(m_jet_particles, jet_def);
+
+    std::vector<fastjet::PseudoJet> jets = cs.inclusive_jets();
+    // sort jets by energy largest to smallest
+    std::sort(jets.begin(), jets.end(), [](fastjet::PseudoJet a, fastjet::PseudoJet b) {
+        return a.E() > b.E();
+    });
+
+    if (jets.size() == 0)
+    {
+        std::cerr << "Expected at least 1 jet, got 0" << std::endl;
+        this->m_isValid = false;
+        return -1;
+    }
+
+    fastjet::PseudoJet jet = jets[0];
+    return jet.E() / getJetVector().E();
 }
 
 double CustomJetAlgorithm::getAverageBaryonDistance()

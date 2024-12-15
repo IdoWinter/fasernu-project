@@ -55,6 +55,7 @@ public:
    double getDeltaPhi();
 
    std::vector<Particle *> getMissingParticles();
+   double calculateEnergyContainmentForRadius(double radius);
    double getAverageBaryonDistance();
    double getAverageMesonDistance();
 
