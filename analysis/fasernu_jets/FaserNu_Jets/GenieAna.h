@@ -37,7 +37,7 @@ protected:
    std::vector<TH1D*> m_histos;
    double m_min_radius = 0.1;
    double m_max_radius = 8;
-   double m_radius_step = 0.3;
+   double m_radius_step = 0.1;
 
    TH1D* h_process;
    TH1D* h_nJets;

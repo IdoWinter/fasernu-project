@@ -58,9 +58,9 @@ void GenieAna::init()
     h_outgoing_baryonEfrac = new TH1D("Outgoing Baryon Efrac", "Outgoing Baryon Efrac", 102, -0.1, 1.1);
     // m_histos.push_back(h_outgoing_baryonEfrac);
 
-    h_radius_of_jet_in_event = new TH1D("Radius of jet", "Radius of jet; radius; relative probability", 100, 0, 10);
+    h_radius_of_jet_in_event = new TH1D("Radius of jet", "Radius of jet; radius; relative probability", int((m_max_radius-m_min_radius)/m_radius_step), m_min_radius, m_max_radius);
     // h_radius_of_jet_in_event->GetYaxis()->SetTitleOffset(1.5);
-    // m_histos.push_back(h_radius_of_jet_in_event);
+    m_histos.push_back(h_radius_of_jet_in_event);
 
 
     h_energy_containment_per_radius = new TH2F("Energy Containment per Radius", "Energy Containment per Radius; Radius; Energy Containment", 
@@ -307,10 +307,14 @@ void GenieAna::fillHistograms(double radius, int nBaryons, int nMesons, double E
 
     for (double r = m_min_radius; r < m_max_radius; r += m_radius_step) {
         double energyContainment = jetAlgorithm->calculateEnergyContainmentForRadius(r);
-        if (energyContainment < m_minimum_energy_containment) {
-            continue;
+        // if (energyContainment < m_minimum_energy_containment) {
+        //     continue;
+        // }
+        if (energyContainment > 0.8) {
+            h_radius_of_jet_in_event->Fill(r);
+            break;
         }
-        h_energy_containment_per_radius->Fill(r, energyContainment);  
+        // h_energy_containment_per_radius->Fill(r, energyContainment);  
     } 
 }
 
@@ -339,34 +343,34 @@ void GenieAna::close()
     f_results->cd();
     TCanvas *canvas = new TCanvas("canvas", "Canvas for Histograms", 800, 600);
     
-    // for (auto h : m_histos)
-    // {
-    //     h->Scale(1.0 / h->Integral());
-    //     h->Draw("HIST");
-    // }
-    
-    // canvas->SaveAs("output.png");
-
-    for (int xBin = 1; xBin <= h_energy_containment_per_radius->GetNbinsX(); ++xBin) {
-        double sum = 0.0;
-        for (int yBin = 1; yBin <= h_energy_containment_per_radius->GetNbinsY(); ++yBin) {
-            sum += h_energy_containment_per_radius->GetBinContent(xBin, yBin);
-            if (h_energy_containment_per_radius->GetBinContent(xBin, yBin) == 0) {
-                h_energy_containment_per_radius->SetBinContent(xBin, yBin, 0.01);  // Set to a small value
-            }
-        }
-
-        for (int yBin = 1; yBin <= h_energy_containment_per_radius->GetNbinsY(); ++yBin) {
-            // Normalize the histogram
-            h_energy_containment_per_radius->SetBinContent(xBin, yBin, h_energy_containment_per_radius->GetBinContent(xBin, yBin) / sum);
-        }
+    for (auto h : m_histos)
+    {
+        h->Scale(1.0 / h->Integral());
+        h->Draw("HIST");
     }
-    h_energy_containment_per_radius->SetContour(100);
+    
+    canvas->SaveAs("output.png");
+
+    // for (int xBin = 1; xBin <= h_energy_containment_per_radius->GetNbinsX(); ++xBin) {
+    //     double sum = 0.0;
+    //     for (int yBin = 1; yBin <= h_energy_containment_per_radius->GetNbinsY(); ++yBin) {
+    //         sum += h_energy_containment_per_radius->GetBinContent(xBin, yBin);
+    //         if (h_energy_containment_per_radius->GetBinContent(xBin, yBin) == 0) {
+    //             h_energy_containment_per_radius->SetBinContent(xBin, yBin, 0.01);  // Set to a small value
+    //         }
+    //     }
+
+    //     for (int yBin = 1; yBin <= h_energy_containment_per_radius->GetNbinsY(); ++yBin) {
+    //         // Normalize the histogram
+    //         h_energy_containment_per_radius->SetBinContent(xBin, yBin, h_energy_containment_per_radius->GetBinContent(xBin, yBin) / sum);
+    //     }
+    // }
+    // h_energy_containment_per_radius->SetContour(100);
 
 
-    h_energy_containment_per_radius->Draw("COLZ");
-    h_energy_containment_per_radius->SetStats(0); // Turn off the statistics box
-    canvas->SaveAs("energy_containment_per_radius.png");
+    // h_energy_containment_per_radius->Draw("COLZ");
+    // h_energy_containment_per_radius->SetStats(0); // Turn off the statistics box
+    // canvas->SaveAs("energy_containment_per_radius.png");
 
     std::string pdfFileName = "RegimeHistograms.pdf";
     bool firstPage = true;
