@@ -1,3 +1,5 @@
+#pragma once
+
 #include "data/tracks.hpp"
 
 struct SimulationData {

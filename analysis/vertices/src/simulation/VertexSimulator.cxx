@@ -25,8 +25,8 @@ SimulationData VertexSimulator::simulate()
     for (int i = 0; i < nVertices; i++)
     {
         // Uniformly generate the position of the vertex.
-        Double_t xVertex = i/10;
-        Double_t yVertex = i/10;
+        Double_t xVertex = i/10.0;
+        Double_t yVertex = i/10.0;
         // the films are 1mm apart.
         Double_t zVertex = random.Uniform(-0.1, 0);
 
@@ -63,8 +63,8 @@ SimulationData VertexSimulator::simulate()
     for (int i = 0; i < mNumOfUnrelatedTracks; i++)
     {
         Track track;
-        track.eX.push_back(random.Uniform(0, 25));
-        track.eY.push_back(random.Uniform(0, 25));
+        track.eX.push_back(random.Uniform(0, SIZE_OF_FILM));
+        track.eY.push_back(random.Uniform(0, SIZE_OF_FILM));
         track.eZ.push_back(0);
         data.unrelatedTracks.push_back(track);
     }

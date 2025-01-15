@@ -1,3 +1,5 @@
+#pragma once
+
 #include "TFile.h"
 
 struct Track {
