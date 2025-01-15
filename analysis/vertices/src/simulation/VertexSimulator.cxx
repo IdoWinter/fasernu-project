@@ -25,8 +25,8 @@ SimulationData VertexSimulator::simulate()
     for (int i = 0; i < nVertices; i++)
     {
         // Uniformly generate the position of the vertex.
-        Double_t xVertex = i/10.0;
-        Double_t yVertex = i/10.0;
+        Double_t xVertex = random.Uniform(0, SIZE_OF_FILM);
+        Double_t yVertex = random.Uniform(0, SIZE_OF_FILM);
         // the films are 1mm apart.
         Double_t zVertex = random.Uniform(-0.1, 0);
 
