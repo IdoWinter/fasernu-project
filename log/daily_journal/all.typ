@@ -30,3 +30,8 @@
 #include "./december/05.typ"
 #include "./december/08.typ"
 #include "./december/09.typ"
+
+#pagebreak()
+= January
+
+#include "./january/15.typ"

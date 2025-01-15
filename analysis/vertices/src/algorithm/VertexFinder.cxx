@@ -101,7 +101,7 @@ std::vector<std::pair<Float_t, Float_t>> VertexFinder::findVertices()
         }
         if (weight != 0)
         {
-            std::cout << "Density: " << density << std::endl;
+            // std::cout << "Density: " << density << std::endl;
             vertices.push_back(std::make_pair(x_value, y_value));
         }
     }
