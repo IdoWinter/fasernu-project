@@ -4,13 +4,16 @@
 #include "TTree.h"
 #include "TTreeReader.h"
 #include "TTreeReaderArray.h"
+#include "TCanvas.h"
 #include "simulation/VertexSimulator.hpp"
 #include "algorithm/VertexFinder.hpp"
 #include <algorithm>
 
 
 void runSimulation() {
-    VertexSimulator simulator(Float_t(5e3), Int_t(10), Int_t(20));
+    int maxTracksPerVertex = 20;
+    double densityOfTracks = 5e3;
+    VertexSimulator simulator(Float_t(densityOfTracks), Int_t(10), Int_t(maxTracksPerVertex));
     SimulationData simulationData = simulator.simulate();
     std::cout << "Generated " << simulationData.vertices.size() << " vertices" << std::endl;
     std::cout << "Generated " << simulationData.unrelatedTracks.size() << " unrelated tracks" << std::endl;
@@ -25,14 +28,9 @@ void runSimulation() {
     }
 
 
-    VertexFinder finder(tracks);
-    auto vertices = finder.findVertices();
+    VertexFinder finder(tracks, 50);
+    auto vertices = finder.findClusters(sqrt(1.0/densityOfTracks/6), maxTracksPerVertex/2);
     std::cout << "Found " << vertices.size() << " vertices" << std::endl;
-    
-    for (auto &vertex : vertices)
-    {
-        std::cout << "Vertex at (" << vertex.first << ", " << vertex.second << ")" << std::endl;
-    }
 }
 
 std::unordered_map<Float_t, std::vector<Track>> parseDataFromRootFile(const std::string& filename)
@@ -105,19 +103,41 @@ int main(int argc, char **argv)
     }
     std::string filename = argv[1];
 
+
     auto zValueToTracks = parseDataFromRootFile(filename);
+    Float_t maxDist = 200;
+
+    auto histogram = new TH1F("hDensity", "Minimum distances between points", 500, 0, maxDist);
+    auto numOfVertices = new TH1F("numOfVertices", "Number of vertices", 20, 0, 20);
+    auto numPointsPerVertex = new TH1I("numPointsPerVertex", "Number of points per vertex", 50, 0, 50);
     for (auto &pair : zValueToTracks)
     {
+    
         std::cout << "Processing film at z=" << pair.first << std::endl;
-        VertexFinder finder(pair.second);
-        auto vertices = finder.findVertices();
-        std::cout << "Found " << vertices.size() << " vertices" << std::endl;
-        for (auto &vertex : vertices)
+        VertexFinder finder(pair.second, maxDist);
+        auto clusters = finder.findClusters(20, 10);
+        numOfVertices->Fill(clusters.size());
+        for (auto &vertex : clusters)
         {
-            // std::cout << "Vertex at (" << vertex.first << ", " << vertex.second << ")" << std::endl;
+            numPointsPerVertex->Fill(vertex.size());
         }
+        // finder.fillHistogram();
+        // auto density = finder.getDensityHistogram();
+        // histogram->Add(density);
     }
 
+    // save as PDF
+    TCanvas *canvas = new TCanvas("c1", "c1", 800, 600);
+    numOfVertices->Draw();
+    canvas->SaveAs("numVertices.pdf");
+
+    TCanvas *canvas2 = new TCanvas("c2", "c2", 800, 600);
+    numPointsPerVertex->Draw();
+    canvas2->SaveAs("numPointsPerVertex.png");
+
+    // TCanvas *canvas2 = new TCanvas("c2", "c2", 800, 600);
+    // histogram->Draw();
+    // canvas2->SaveAs("density.png");
 
 
     return 0;

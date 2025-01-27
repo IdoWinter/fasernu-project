@@ -19,7 +19,7 @@ SimulationData VertexSimulator::simulate()
     // seed with the current time
     random.SetSeed();
     int nVertices = random.Poisson(m_nMaxVertices);
-    Double_t sigmaAngle = 0.075; // milliradians
+    Double_t sigmaAngle = 0.075; // radians
 
     SimulationData data;
     for (int i = 0; i < nVertices; i++)
