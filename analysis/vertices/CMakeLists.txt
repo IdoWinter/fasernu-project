@@ -31,17 +31,28 @@ else()
       message(FATAL_ERROR "Environment variable FJCONTRIB_PATH is not set. Please set it to the path of FastJet contrib.")
 endif()
 
+if(DEFINED ENV{ACTS_DIR})
+      # Use the environment variable for include and library paths
+      set(ACTS_DIR $ENV{ACTS_DIR})
+else()
+      message(FATAL_ERROR "Environment variable ACTS_DIR is not set. Please set it to the path of Acts.")
+endif()
+
 # Locate the ROOT package and define a number of useful targets and variables.
    find_package(ROOT REQUIRED RIO Graf Hist Net Core)
    find_package(CGAL REQUIRED COMPONENTS Qt5)
    find_package(Qt5 REQUIRED COMPONENTS Widgets)
-
+   find_package(Eigen3 REQUIRED NO_MODULE)
+   
    # REQUIRED COMPONENTS RIO Net)
    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
    include_directories(${CMAKE_CURRENT_SOURCE_DIR})
    include_directories(${FASTJET_INCLUDE_DIRS})
    include_directories(${FASTJET_CONTRIB_DIR}/include)
+   include_directories(${EIGEN3_INCLUDE_DIRS})
+   include_directories(${ACTS_DIR}/include)
    link_directories(${FASTJET_CONTRIB_DIR}/lib)
+   link_directories(${ACTS_DIR}/lib64)
 # Create a shared library.
 # Passing cmake targets such as `ROOT::RIO` as dependencies (rather than plain
 # library names for example via ${ROOT_LIBRARIES}) ensures that properties such as required

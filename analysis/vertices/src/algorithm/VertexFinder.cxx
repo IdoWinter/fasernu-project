@@ -10,10 +10,13 @@
 
 VertexFinder::VertexFinder(std::vector<Track> &tracks, Float_t maxDist)
 {
-    for (auto &track : tracks)
+    this->m_tracks = tracks;
+    for (int i = 0; i < tracks.size(); ++i)
     {
+        auto &track = tracks[i];
         points.x.push_back(track.eX[0]);
         points.y.push_back(track.eY[0]);
+        points.trackID.push_back(i);
         points.clusterID.push_back(UNCLASSIFIED);
         points.visited.push_back(false);
     }
@@ -24,7 +27,7 @@ VertexFinder::VertexFinder(std::vector<Track> &tracks, Float_t maxDist)
 VertexFinder::~VertexFinder()
 {}
 
-std::vector<std::vector<std::pair<Float_t, Float_t>>> VertexFinder::findClusters(double epsilon, int minPts)
+std::vector<std::vector<Track>> VertexFinder::findClusters(double epsilon, int minPts)
 {
     const double epsilonSq = epsilon * epsilon;
     const double cellSize = epsilon / std::sqrt(2);
@@ -68,14 +71,14 @@ std::vector<std::vector<std::pair<Float_t, Float_t>>> VertexFinder::findClusters
         }
     }
 
-    std::map<int, std::vector<std::pair<Float_t, Float_t>>> clusterMap;
+    std::map<int, std::vector<Track>> clusterMap;
     for (int i = 0; i < points.x.size(); ++i) {
         if (points.clusterID[i] > 0) {
-            clusterMap[points.clusterID[i]].push_back(std::make_pair(points.x[i], points.y[i]));
+            clusterMap[points.clusterID[i]].push_back(m_tracks[points.trackID[i]]);
         }
     }
 
-    std::vector<std::vector<std::pair<Float_t, Float_t>>> clusters;
+    std::vector<std::vector<Track>> clusters;
     for (auto &cluster : clusterMap) {
         clusters.push_back(cluster.second);
     }

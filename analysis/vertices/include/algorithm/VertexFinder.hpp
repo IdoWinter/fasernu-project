@@ -25,7 +25,7 @@ public:
   VertexFinder(std::vector<Track>& tracks, Float_t maxDist);
   ~VertexFinder();
 
-  std::vector<std::vector<std::pair<Float_t, Float_t>>> findClusters(double epsilon, int minPts);
+  std::vector<std::vector<Track>> findClusters(double epsilon, int minPts);
   void fillHistogram();
   TH1F* getDensityHistogram() { return m_density; }
 private:
@@ -35,6 +35,7 @@ private:
     Grid createGrid(double cellSize);
 
     TH1F* m_density;
+    std::vector<Track> m_tracks;
 
     // Use SOA for better cache locality
     struct Points {
@@ -42,5 +43,6 @@ private:
         std::vector<Float_t> y;
         std::vector<int> clusterID; // -1 for noise, 0 for unclassified
         std::vector<bool> visited;
+        std::vector<int> trackID;
     } points;
 };
