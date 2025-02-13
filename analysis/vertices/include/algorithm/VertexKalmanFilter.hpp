@@ -11,7 +11,7 @@ public:
     ~VertexKalmanFilter();
 
     // std::vector<Acts::Vertex> filterTracks();
-    Acts::BoundTrackParameters fitTrack(const Track &track);
+    std::unique_ptr<Acts::FreeTrackParameters> convertTrackToActs(const Track &track);
 
 private:
     std::vector<std::vector<Track>> &m_trackClusters;

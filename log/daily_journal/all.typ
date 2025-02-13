@@ -16,22 +16,15 @@
 // }
 #outline(depth: 1)
 
-#pagebreak()
-= November
+
 #include "./november/24.typ"
 #include "./november/25.typ"
 #include "./november/28.typ"
-
-#pagebreak()
-= December
-
 #include "./december/01.typ"
 #include "./december/02.typ"
 #include "./december/05.typ"
 #include "./december/08.typ"
 #include "./december/09.typ"
-
-#pagebreak()
-= January
-
 #include "./january/15.typ"
+#include "./february/10.typ"
+#include "./february/13.typ"

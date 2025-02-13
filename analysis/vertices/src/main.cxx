@@ -48,6 +48,8 @@ std::map<Float_t, std::vector<Track>> parseDataFromRootFile(const std::string &f
         return std::map<Float_t, std::vector<Track>>();
     }
 
+    TTree *tracksTree = (TTree *)file->Get("tracks");
+
     // load the data from the file
     // in tracks.sf.{eX, eY, eZ, eTX, eTY}
     TTreeReader tracks("tracks", file);
@@ -56,6 +58,16 @@ std::map<Float_t, std::vector<Track>> parseDataFromRootFile(const std::string &f
     TTreeReaderArray<Float_t> eX(tracks, "sf.eX");
     TTreeReaderArray<Float_t> eY(tracks, "sf.eY");
     TTreeReaderArray<Float_t> eZ(tracks, "sf.eZ");
+    TTreeReaderArray<Float_t> eTX(tracks, "sf.eTX");
+    TTreeReaderArray<Float_t> eTY(tracks, "sf.eTY");
+    TTreeReaderArray<Float_t> eP(tracks, "sf.eP");
+    Int_t nrows = 0, ncols = 0;
+    Double_t *matElements = 0;
+    tracksTree->SetBranchAddress("sf.eCOV.fElements", &matElements);
+    tracksTree->SetBranchAddress("sf.eCOV.fNcols", &ncols);
+    tracksTree->SetBranchAddress("sf.eCOV.fNrows", &nrows);
+    std::cout << "has value " << tracksTree->GetBranch("sf.eCOV.fElements")->GetEntries() << std::endl;
+    // TTreeReaderArray<TMatrixT<double>*> eCOV(tracks, "sf.eCOV");
 
     Long64_t nEntries = tracks.GetEntries();
     Long64_t iterations = 0;
@@ -63,24 +75,9 @@ std::map<Float_t, std::vector<Track>> parseDataFromRootFile(const std::string &f
     while (tracks.Next())
     {
         iterations++;
-        int minZIndex = 0;
-        Float_t minZ = eZ[0];
-        for (int i = 1; i < eZ.GetSize(); i++)
-        {
-            if (eZ[i] < minZ)
-            {
-                minZ = eZ[i];
-                minZIndex = i;
-            }
-        }
-        if (eX.GetSize() < minZIndex || eY.GetSize() < minZIndex)
-        {
-            std::cerr << "Invalid data at entry " << tracks.GetCurrentEntry() << std::endl;
-            continue;
-        }
-        Float_t sf_eX = eX[minZIndex];
-        Float_t sf_eY = eY[minZIndex];
-        Float_t sf_eZ = eZ[minZIndex];
+        Float_t sf_eX = eX[0];
+        Float_t sf_eY = eY[0];
+        Float_t sf_eZ = eZ[0];
         if (!std::isfinite(sf_eX) || !std::isfinite(sf_eY) || !std::isfinite(sf_eZ))
         {
             std::cerr << "Invalid data at entry " << tracks.GetCurrentEntry() << std::endl;
@@ -94,19 +91,35 @@ std::map<Float_t, std::vector<Track>> parseDataFromRootFile(const std::string &f
         track.eX.reserve(eX.GetSize());
         track.eY.reserve(eY.GetSize());
         track.eZ.reserve(eZ.GetSize());
-        track.eX.push_back(eX[minZIndex]);
-        track.eY.push_back(eY[minZIndex]);
-        track.eZ.push_back(eZ[minZIndex]);
         for (int i = 0; i < eX.GetSize(); i++)
         {
-            if (i == minZIndex)
-            {
-                continue;
-            }
             track.eX.push_back(eX[i]);
             track.eY.push_back(eY[i]);
             track.eZ.push_back(eZ[i]);
         }
+        for (int i = 0; i < eTX.GetSize(); i++)
+        {
+            track.eTX.push_back(eTX[i]);
+            track.eTY.push_back(eTY[i]);
+        }
+        for (int i = 0; i < eP.GetSize(); i++)
+        {
+            track.eP.push_back(eP[i]);
+        }
+        tracksTree->GetEntry(tracks.GetCurrentEntry());
+        std::cout << "Covariance matrix size: " << nrows << " x " << ncols << std::endl;
+        for (int i = 0; i < nrows; i++)
+        {
+            for (int j = 0; j < ncols; j++)
+            {
+                track.covariance(i, j) = matElements[i * ncols + j];
+            }
+        }
+        // std::cout << "Covariance matrix size: " << eCOV.GetSize() << std::endl;
+        // for (int i = 0; i < eCOV.GetSize(); i++)
+        // {
+        //     std::cout << "Covariance matrix " << i << " size: " << (*(eCOV[i])).GetNcols() << std::endl;
+        // }
         filmToOriginatingTracks[sf_eZ].push_back(track);
     }
     std::cout << "There are " << filmToOriginatingTracks.size() << " unique Z values" << std::endl;
